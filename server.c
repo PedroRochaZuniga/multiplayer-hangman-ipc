@@ -21,8 +21,15 @@
 // accept - Aceita uma conexão de entrada
 // send - Envia dados através de um socket conectado
 // recv - Recebe dados de um socket conectado
+// sendto - Envia dados através d eum socket sem conexão UDP
+// recvfrom - Recebe dados de um socket sem conexão
+// connect - Estabelece conexão com um socket remoto
+// shutdown - encerra a transmissão em um ou em ambos os sentidos do socket
+// setsockopt - configura as opções d eum socket
+// getsockopt - obtém opções de um socket
+// gethostbyname – obtém informações sobre um host a partir do nome
+// gethostbyname – obtém informações sobre um host
 
-//Inicializar a bibliteca
 int main(void)
 {
 //Ativar a biblioteca
