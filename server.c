@@ -24,11 +24,14 @@
 // sendto - Envia dados através d eum socket sem conexão UDP
 // recvfrom - Recebe dados de um socket sem conexão
 // connect - Estabelece conexão com um socket remoto
-// shutdown - encerra a transmissão em um ou em ambos os sentidos do socket
-// setsockopt - configura as opções d eum socket
-// getsockopt - obtém opções de um socket
-// gethostbyname – obtém informações sobre um host a partir do nome
-// gethostbyname – obtém informações sobre um host
+// shutdown - Encerra a transmissão em um ou em ambos os sentidos do socket
+// setsockopt - Configura as opções d eum socket
+// getsockopt - Obtém opções de um socket
+// gethostbyname – Obtém informações sobre um host a partir do nome
+// gethostbynaddr – Obtém informações sobre um host a partir do end de IP
+// gethostname - Obtém o nome do host local
+// getaddrinfo - Obtém informações deum endereço para um nome ou serviço
+
 
 int main(void)
 {
@@ -49,7 +52,7 @@ int main(void)
     if (sock ==INVALID_SOCKET){
         printf("Errro ao criar o socket: %d\n", WSAGetLastError());
         closesocket(sock);
-        WSACleanup;
+        WSACleanup();
         return 1;
     }
     else {printf("Socket Criado com sucesso\n");}
@@ -86,7 +89,7 @@ int main(void)
         closesocket(sock);
         WSACleanup();
         return 1;
-    } else {printf("Conexão aceita com sucesso\n");}
+    } else {printf("Conexao aceita com sucesso\n");}
 
 //imprimir a mensagem
     char recvBuffer[512];
@@ -99,7 +102,7 @@ int main(void)
     }
     else{
         recvBuffer[bytesReceived] = '\0'; //terminador nulo ao final dos dados recebidos
-        printf("RECEBIDO %d bytes do servidor: %s\n",bytesReceived,recvBuffer);
+        printf("RECEBIDO %d bytes do cliente: %s\n",bytesReceived,recvBuffer);
     }
 
 //usar client/server
