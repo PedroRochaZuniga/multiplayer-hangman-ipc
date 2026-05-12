@@ -91,23 +91,49 @@ int main(void)
         return 1;
     } else {printf("Conexao aceita com sucesso\n");}
 
-//imprimir a mensagem
+//Fazendo o loop de mensagens
     char recvBuffer[512];
+    char envioBuffer[512];
+    while (1){
     int bytesReceived = recv(clientSocket,recvBuffer,sizeof(recvBuffer),0);
     if (bytesReceived == SOCKET_ERROR){
         printf("Erro ao receber dados: %d\n", WSAGetLastError());
         closesocket(clientSocket);
         WSACleanup();
         return 1;
+    }else if(bytesReceived == 0){
+        printf("O cliente fechou a conexao\n");
+        break;
     }
     else{
         recvBuffer[bytesReceived] = '\0'; //terminador nulo ao final dos dados recebidos
-        printf("RECEBIDO %d bytes do cliente: %s\n",bytesReceived,recvBuffer);
+        printf("RECEBIDO: %s\n",recvBuffer);
+        if (strcmp(recvBuffer,"sair")== 0){ // compara a mensagem com *sair*, se for, fecha o jogo
+            printf("Cliente pediu para sair do jogo!");
+            break;
+        }
     }
+    printf("Digite a mensagem para enviar ao cliente: ");
+    fgets(envioBuffer,sizeof(envioBuffer),stdin);
+    envioBuffer[strcspn(envioBuffer,"\n")] = 0; // troca o \n por \0
+
+    int bytesSent = send(clientSocket,envioBuffer,strlen(envioBuffer),0);
+    if (bytesSent == SOCKET_ERROR){
+        printf("Erro ao enviar dados; %d!\n",WSAGetLastError());
+        closesocket(clientSocket);
+        WSACleanup();
+        return 1;
+    }
+    if (strcmp(envioBuffer,"sair") == 0){
+        printf("Encerrando o jogo com o cliente\n");
+        break;
+    }
+}
 
 //usar client/server
-
     getchar();
+//Fechar o socket do cliente
+    closesocket(clientSocket);
 //Fechar o socket criado
     closesocket(sock);
 //Finalizar a biblioteca Winsock
