@@ -38,19 +38,46 @@ int main(void){
     else{printf("Conectando ao servidor\n");}
 
 // Enviando mensagem
-    char texto[100];
-    printf("Digite oque quer enviar: ");
-    scanf("%s",&texto);
+// Recendo a mensagem
+// Loop com socket do servidor
+
+    char texto[512];
+    char recvBuffer[512];
+    int bytesReceived;
+    while (1){
+    printf("Digite oque quer enviar para o servidor: ");
+    fgets(texto,sizeof(texto),stdin);
+    texto[strcspn(texto,"\n")] = 0; // Encontra o \n da mensagem e troca por \0
     int bytesSent = send(clientSocket, texto, strlen(texto),0);
     if (bytesSent == SOCKET_ERROR){
         printf("Erro ao enviar dados: %d\n",WSAGetLastError());
         closesocket(clientSocket);
         WSACleanup();
         return 1;
-    } else{
-        printf("Enviado %d bytes para o servidor\n",bytesSent);
+    }if (strcmp(texto,"sair")== 0){
+        printf("Encerrando a conexao com os servidor!\n");
+        break;
     }
-
+    bytesReceived = recv(clientSocket, recvBuffer,sizeof(recvBuffer),0);
+    if (bytesReceived == SOCKET_ERROR){
+        printf("Erro ao receber dados: %d\n",WSAGetLastError());
+        closesocket(clientSocket);
+        WSACleanup();
+        return 1;
+    }
+    else if (bytesReceived == 0){
+        printf("O servidor fechou o jogo!\n");
+        break;
+    }
+    else{
+        recvBuffer[bytesReceived] = '\0';
+        printf("Recebido: %s\n",recvBuffer);
+        if (strcmp(recvBuffer,"sair")== 0){
+            printf("Servidor pediu para fechar o jogo!\n");
+            break;
+        }
+    }
+    }
 // Finalizando socket/biblioteca
     getchar();
 // Usar client/server
