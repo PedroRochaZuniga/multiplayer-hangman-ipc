@@ -80,11 +80,11 @@ int main(void)
     else {printf("Listen realizado com sucesso\n");}
 
 //aceitar conexao
-    SOCKET clientSocket;
     struct sockaddr_in clientAddr;
     int clientAddrLen = sizeof(clientAddr);
-    clientSocket = accept(sock,(struct sockaddr*)&clientAddr,&clientAddrLen);
-    if (clientSocket == INVALID_SOCKET){
+    SOCKET jogador1 = accept(sock, (struct sockaddr*)&clientAddr,&clientAddrLen);
+    SOCKET jogador2 = accept(sock, (struct sockaddr*)&clientAddr,&clientAddrLen);
+    if (jogador1 == INVALID_SOCKET){
         printf("Erro ao aceitar a conexão: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
@@ -94,11 +94,13 @@ int main(void)
 //Fazendo o loop de mensagens
     char recvBuffer[512];
     char envioBuffer[512];
+    int turno = 1;
+    SOCKET atual = jogador1;
     while (1){
-    int bytesReceived = recv(clientSocket,recvBuffer,sizeof(recvBuffer),0);
+    int bytesReceived = recv(atual,recvBuffer,sizeof(recvBuffer),0);
     if (bytesReceived == SOCKET_ERROR){
         printf("Erro ao receber dados: %d\n", WSAGetLastError());
-        closesocket(clientSocket);
+        closesocket(atual);
         WSACleanup();
         return 1;
     }else if(bytesReceived == 0){
@@ -117,10 +119,10 @@ int main(void)
     fgets(envioBuffer,sizeof(envioBuffer),stdin);
     envioBuffer[strcspn(envioBuffer,"\n")] = 0; // troca o \n por \0
 
-    int bytesSent = send(clientSocket,envioBuffer,strlen(envioBuffer),0);
+    int bytesSent = send(atual,envioBuffer,strlen(envioBuffer),0);
     if (bytesSent == SOCKET_ERROR){
         printf("Erro ao enviar dados; %d!\n",WSAGetLastError());
-        closesocket(clientSocket);
+        closesocket(atual);
         WSACleanup();
         return 1;
     }
@@ -128,12 +130,17 @@ int main(void)
         printf("Encerrando o jogo com o cliente\n");
         break;
     }
+    if (turno == 1) turno = 2;
+    else turno = 1;
+
+    if (turno == 1) atual = jogador1;
+    else atual = jogador2;
 }
 
 //usar client/server
     getchar();
 //Fechar o socket do cliente
-    closesocket(clientSocket);
+    closesocket(atual);
 //Fechar o socket criado
     closesocket(sock);
 //Finalizar a biblioteca Winsock
