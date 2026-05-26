@@ -11,6 +11,13 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+
+// RODAR NO TERMINAL
+//    gcc server.c -o server -lws2_32
+//    gcc client.c -o client -lws2_32
+//    ./server
+//    ./client
+
 //Funções principais
 // WSAStartup - Inicializa a biblioteca Winsock
 // WSACleanup - Encerra o uso da biblioteca Winsock
@@ -90,12 +97,21 @@ int main(void)
         WSACleanup();
         return 1;
     } else {printf("Conexao aceita com sucesso\n");}
+    send(jogador1, "SUA_VEZ", 8, 0);
+    send(jogador2, "ESPERE", 7, 0);
 
 //Fazendo o loop de mensagens
     char recvBuffer[512];
     char envioBuffer[512];
     int turno = 1;
     SOCKET atual = jogador1;
+    char *palavra = "pedrinhe";
+    char palavra_secreta[100];
+    for (int i = 0; i < strlen(palavra); i++){
+        palavra_secreta[i] = '_';
+    }
+    palavra_secreta[strlen(palavra)] = '\0';
+
     while (1){
     int bytesReceived = recv(atual,recvBuffer,sizeof(recvBuffer),0);
     if (bytesReceived == SOCKET_ERROR){
@@ -110,25 +126,23 @@ int main(void)
     else{
         recvBuffer[bytesReceived] = '\0'; //terminador nulo ao final dos dados recebidos
         printf("RECEBIDO: %s\n",recvBuffer);
+        printf(" ");
+        char letra = recvBuffer[1];
+        for (int i = 0; i< strlen(palavra);i++){ if(palavra[i]==letra){ palavra_secreta[i]=letra;}}
+        printf("Palavra: %s\n",palavra_secreta);
         if (strcmp(recvBuffer,"sair")== 0){ // compara a mensagem com *sair*, se for, fecha o jogo
             printf("Cliente pediu para sair do jogo!");
             break;
         }
     }
-    printf("Digite a mensagem para enviar ao cliente: ");
-    fgets(envioBuffer,sizeof(envioBuffer),stdin);
-    envioBuffer[strcspn(envioBuffer,"\n")] = 0; // troca o \n por \0
-
-    int bytesSent = send(atual,envioBuffer,strlen(envioBuffer),0);
+    //int bytesSent = send(atual,palavra_secreta,strlen(palavra_secreta),0);
+    int bytesSent = send(jogador1,palavra_secreta,strlen(palavra_secreta),0);
+    bytesSent = send(jogador2,palavra_secreta,strlen(palavra_secreta),0);
     if (bytesSent == SOCKET_ERROR){
-        printf("Erro ao enviar dados; %d!\n",WSAGetLastError());
+        printf("Erro ao enviar palavra; %d!\n",WSAGetLastError());
         closesocket(atual);
         WSACleanup();
         return 1;
-    }
-    if (strcmp(envioBuffer,"sair") == 0){
-        printf("Encerrando o jogo com o cliente\n");
-        break;
     }
     if (turno == 1) turno = 2;
     else turno = 1;
