@@ -97,15 +97,15 @@ int main(void)
         WSACleanup();
         return 1;
     } else {printf("Conexao aceita com sucesso\n");}
-    send(jogador1, "SUA_VEZ", 8, 0);
-    send(jogador2, "ESPERE", 7, 0);
+    //send(jogador1, "SUA_VEZ", 8, 0);
+    //send(jogador2, "ESPERE", 7, 0);
 
 //Fazendo o loop de mensagens
     char recvBuffer[512];
     char envioBuffer[512];
     int turno = 1;
     SOCKET atual = jogador1;
-    char *palavra = "pedrinhe";
+    char *palavra = "computador";
     char palavra_secreta[100];
     for (int i = 0; i < strlen(palavra); i++){
         palavra_secreta[i] = '_';
@@ -113,6 +113,13 @@ int main(void)
     palavra_secreta[strlen(palavra)] = '\0';
 
     while (1){
+    send(atual, "SUA_VEZ", 8, 0);
+    if (atual == jogador1){
+        send(jogador2, "ESPERE", 7, 0);
+    }
+    else{
+        send(jogador1, "ESPERE", 7, 0);
+    }
     int bytesReceived = recv(atual,recvBuffer,sizeof(recvBuffer),0);
     if (bytesReceived == SOCKET_ERROR){
         printf("Erro ao receber dados: %d\n", WSAGetLastError());
@@ -130,14 +137,11 @@ int main(void)
         char letra = recvBuffer[1];
         for (int i = 0; i< strlen(palavra);i++){ if(palavra[i]==letra){ palavra_secreta[i]=letra;}}
         printf("Palavra: %s\n",palavra_secreta);
-        if (strcmp(recvBuffer,"sair")== 0){ // compara a mensagem com *sair*, se for, fecha o jogo
-            printf("Cliente pediu para sair do jogo!");
-            break;
         }
     }
     //int bytesSent = send(atual,palavra_secreta,strlen(palavra_secreta),0);
     int bytesSent = send(jogador1,palavra_secreta,strlen(palavra_secreta),0);
-    bytesSent = send(jogador2,palavra_secreta,strlen(palavra_secreta),0);
+    int bytesSent = send(jogador2,palavra_secreta,strlen(palavra_secreta),0);
     if (bytesSent == SOCKET_ERROR){
         printf("Erro ao enviar palavra; %d!\n",WSAGetLastError());
         closesocket(atual);
@@ -159,8 +163,7 @@ int main(void)
     closesocket(sock);
 //Finalizar a biblioteca Winsock
     WSACleanup();
-    return 0;
-}
+
 
 
 

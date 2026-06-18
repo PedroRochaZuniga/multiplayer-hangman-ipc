@@ -79,7 +79,6 @@ int main(void){
 
         printf("Palavra: %s\n",recvBuffer);
     }
-    printf("Digite uma letra: ");
     fgets(texto,sizeof(texto),stdin);
     texto[strcspn(texto,"\n")] = 0; // Encontra o \n da mensagem e troca por \0
     int bytesSent = send(clientSocket, texto, strlen(texto),0);
