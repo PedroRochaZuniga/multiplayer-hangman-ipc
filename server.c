@@ -10,7 +10,8 @@
 #include <Windows.h>
 
 #pragma comment(lib, "Ws2_32.lib")
-
+#define MAX_ERROS 6
+#define TAM_BUFFER 512
 
 // RODAR NO TERMINAL
 //    gcc server.c -o server -lws2_32
@@ -38,6 +39,89 @@
 // gethostbynaddr – Obtém informações sobre um host a partir do end de IP
 // gethostname - Obtém o nome do host local
 // getaddrinfo - Obtém informações deum endereço para um nome ou serviço
+
+
+
+// Palavras para o jogo!
+const char *palavras[] = {"computador", "operacional", "clusters", "processo", "deadlock", "sistema", "memoria", "registrador", "grafos"};
+
+//Estrutura compartilhada para os jogadores
+typedef struct{
+    const char *palavra;
+    char palavra_secreta[100];
+    char letras_usadas[27];
+    int num_letras_usadas;
+    int erros;
+    int turno;
+    int jogo_ativo;
+} Estadojogo;
+
+//Função geral que envia a mensagem pros dois jogadores
+void broadcast(SOCKET jogador1, SOCKET jogador2, const char *msg){
+    send(jogador1,msg,(int)strlen(msg) + 1, 0);
+    send(jogador2,msg,(int)strlen(msg) + 1, 0);
+}
+
+//Função que envia mensagens para ambos os jogadores com as informações mais importantes
+void enviar_descobertas(SOCKET jogador1, SOCKET jogador2, Estadojogo *estado){
+    char buffer[512];
+
+    //Envia a palavra secreta
+    sprintf(buffer,"Palavra: %s\n",estado->palavra_secreta);
+    broadcast(jogador1,jogador2,buffer);
+
+    //Envia a quantidade de erros
+    sprintf(buffer,"Erros: %d/%d\n",estado->erros,MAX_ERROS);
+    broadcast(jogador1,jogador2,buffer);
+
+    //Envia as letras já usadas
+    sprintf(buffer,"Letras já usadas: %s\n",estado->letras_usadas);
+    broadcast(jogador1,jogador2,buffer);
+}
+
+//Função que verifica se a palavra secreta não possui mais *_*, ou seja, foi descoberta
+int palavra_descoberta(Estadojogo *estado){
+    return strchr(estado->palavra_secreta,"_") == NULL;
+}
+
+
+//Função de processar letra, laço de repetição na palavra originl, se encontrou uma letra igual
+//troca essa letra na mesma posição, mas na palavra secreta (cheia de _), caso não encontre, adiciona um erro
+int processar_letra(Estadojogo *estado, char letra){
+    letra = tolower((unsigned char)letra);
+    for (int i = 0; i < estado->num_letras_usadas; i++){
+        if (estado->letras_usadas[i] == letra) return -1;
+        }
+    estado->letras_usadas[estado->num_letras_usadas++] = letra;
+    estado->letras_usadas[estado->num_letras_usadas] = '\0';
+
+    int acertou = 0;
+    for (int i = 0; i < (int)strlen(estado->palavra);i++){
+        if (estado->palavra[i] == letra){
+            estado->palavra_secreta[i] = letra;
+            acertou = 1;
+        }
+    }
+    if (!acertou) estado->erros++;
+    return acertou;
+    }
+
+
+//Função de processar chute, antes coloca todo o chute em minúsculo, e compara o chute com a palavra original, se acertou retorna 1,
+//se errou retorna 0 e adicionam 2 erros, como penalidade, ao invés de 1
+int processa_chute(Estadojogo *estado, const char *chute){
+    char chute_lower[100];
+    strcpy(chute_lower,chute);
+    for (int i = 0; chute_lower[i]; i++){
+        chute_lower[i] = tolower((unsigned char)chute_lower[i]);
+        return 1;
+    }
+    if (strcmp(chute_lower,estado->palavra) == 0){
+        return 1;
+    }
+    estado->erros += 2;
+    return 0;
+}
 
 
 int main(void)
@@ -91,7 +175,7 @@ int main(void)
     int clientAddrLen = sizeof(clientAddr);
     SOCKET jogador1 = accept(sock, (struct sockaddr*)&clientAddr,&clientAddrLen);
     SOCKET jogador2 = accept(sock, (struct sockaddr*)&clientAddr,&clientAddrLen);
-    if (jogador1 == INVALID_SOCKET){
+    if (jogador1 == INVALID_SOCKET || jogador2 == INVALID_SOCKET){
         printf("Erro ao aceitar a conexão: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
