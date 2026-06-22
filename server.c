@@ -44,6 +44,7 @@
 
 // Palavras para o jogo!
 const char *palavras[] = {"computador", "operacional", "clusters", "processo", "deadlock", "sistema", "memoria", "registrador", "grafos"};
+#define NUM_PALAVRAS (sizeof(palavras) / sizeof(palavras[0]))
 
 //Estrutura compartilhada para os jogadores
 typedef struct{
@@ -126,6 +127,7 @@ int processa_chute(Estadojogo *estado, const char *chute){
 
 int main(void)
 {
+
 //Ativar a biblioteca
     WSADATA winsocketsDados;
     int temp;
@@ -181,29 +183,38 @@ int main(void)
         WSACleanup();
         return 1;
     } else {printf("Conexao aceita com sucesso\n");}
-    //send(jogador1, "SUA_VEZ", 8, 0);
-    //send(jogador2, "ESPERE", 7, 0);
 
-//Fazendo o loop de mensagens
+//Inicializando dados para o jogo
+    Estadojogo estado;
+    memset(&estado,0,sizeof(estado));   
+    estado.palavra = palavras[rand() % NUM_PALAVRAS];
+    int n = (int)strlen(estado.palavra);
+    for (int i = 0; i < n; i++)estado.palavra_secreta[i] = '_';
+    estado.palavra_secreta[n] = '\0';
+    estado.letras_usadas[0] = '\0';
+    estado.erros = 0;
+    estado.turno = 1;
+    estado.jogo_ativo = 1;
+    estado.num_letras_usadas = 0;
+
+    printf("[Servidor] Palavra sorteada foi: %s (%d letras)\n", estado.palavra, n);
+
+    send(jogador1, "VOCE_JG1", 8, 0);
+    send(jogador2,"VOCE_JG2", 9, 0);
+
+    enviar_descobertas(jogador1,jogador2,&estado);
+
     char recvBuffer[512];
-    char envioBuffer[512];
-    int turno = 1;
-    SOCKET atual = jogador1;
-    char *palavra = "computador";
-    char palavra_secreta[100];
-    for (int i = 0; i < strlen(palavra); i++){
-        palavra_secreta[i] = '_';
-    }
-    palavra_secreta[strlen(palavra)] = '\0';
+    char sendBuffer[512];
+    int bytesRecv;
 
-    while (1){
+
+    while (estado.jogo_ativo){
+    SOCKET atual = (estado.turno == 1)? jogador1 : jogador2;
+    SOCKET espera = (estado.turno == 1)? jogador2 : jogador1;
     send(atual, "SUA_VEZ", 8, 0);
-    if (atual == jogador1){
-        send(jogador2, "ESPERE", 7, 0);
-    }
-    else{
-        send(jogador1, "ESPERE", 7, 0);
-    }
+    send(espera, "ESPERE", 7, 0);
+    
     int bytesReceived = recv(atual,recvBuffer,sizeof(recvBuffer),0);
     if (bytesReceived == SOCKET_ERROR){
         printf("Erro ao receber dados: %d\n", WSAGetLastError());
@@ -211,38 +222,94 @@ int main(void)
         WSACleanup();
         return 1;
     }else if(bytesReceived == 0){
-        printf("O cliente fechou a conexao\n");
+        printf("[Servidor] O jogador %d saiu!\n", estado.turno);
+        broadcast(jogador1,jogador2,"SAIR");
         break;
     }
-    else{
-        recvBuffer[bytesReceived] = '\0'; //terminador nulo ao final dos dados recebidos
-        printf("RECEBIDO: %s\n",recvBuffer);
-        printf(" ");
-        char letra = recvBuffer[1];
-        for (int i = 0; i< strlen(palavra);i++){ if(palavra[i]==letra){ palavra_secreta[i]=letra;}}
-        printf("Palavra: %s\n",palavra_secreta);
-        }
-    }
-    //int bytesSent = send(atual,palavra_secreta,strlen(palavra_secreta),0);
-    int bytesSent = send(jogador1,palavra_secreta,strlen(palavra_secreta),0);
-    int bytesSent = send(jogador2,palavra_secreta,strlen(palavra_secreta),0);
-    if (bytesSent == SOCKET_ERROR){
-        printf("Erro ao enviar palavra; %d!\n",WSAGetLastError());
-        closesocket(atual);
-        WSACleanup();
-        return 1;
-    }
-    if (turno == 1) turno = 2;
-    else turno = 1;
+    recvBuffer[bytesReceived] = '\0';
+    printf("[Servidor] Recebido %d\n", recvBuffer);
+    
 
-    if (turno == 1) atual = jogador1;
-    else atual = jogador2;
+//Faz todo o protocolo de troca e análise das mensagens
+    int troca_turno = 1;
+
+    char identificador = recvBuffer[0];
+    char letra_ou_chute = recvBuffer[1];
+    int dado = 2;
+
+//Verfica se o jogador na mensagem é o mesmo do turno
+    int turno_esperado = estado.turno + '0';
+    if (identificador != turno_esperado){
+        printf("[Servidor] Mensagem fora de turno!\n");
+        send(atual, "INVALIDO", 9, 0);
+        troca_turno = 0;
+    }
+    // Verificação de letra 
+    else if(letra_ou_chute == 'L' || letra_ou_chute == 'l'){
+        char letra = recvBuffer[dado];
+        printf(" ");
+        printf("[Servidor] Jogador %d escolheu a letra %c\n", estado.turno, letra);
+        int resultado = processar_letra(&estado, letra);
+
+        if (resultado == -1){
+            send(atual, "LETRA_JA_USADA", 15, 0);
+            troca_turno = 0;
+        } else if (resultado == 1){
+            send(atual, "ACERTO", 7, 0);
+            send(espera, "ACERTO_OPNENTE", 16, 0);
+            troca_turno = 0;
+        } else {
+            send(atual, "ERRO", 5, 0);
+            send(espera, "ERRO_OPONENTE", 14, 0);
+            troca_turno = 1;
+
+        }
+
+    } 
+    // Verificação de chute
+    else if(letra_ou_chute == 'C' || letra_ou_chute == 'c'){
+        const char *chute = recvBuffer + dado;
+        printf("[Servidor] Jogador %d chutou: %s \n", estado.turno,  chute);
+        if (processa_chute(&estado, chute)){
+            send(atual, "CHUTE_CERTO", 12, 0);
+        } else {
+            send(atual, "CHUTE_ERRADO", 13, 0);
+            send(espera, "CHUTE_OPONENTE_ERRADO", 22, 0);
+        }
+         troca_turno = 1;
+
+    } else{
+        send(atual, "INVALIDO", 9, 0);
+        troca_turno = 0;
+
+    }
+    enviar_descobertas(jogador1,jogador2,&estado);
+
+    //Verifica se o jogo já acabou, vitória ou erros
+    if (palavra_completa(&estado)) {
+            sprintf(sendBuffer, "Vitória do: Jogador %d!", estado.turno);
+            broadcast(jogador1, jogador2, sendBuffer);
+            printf("[Servidor] Jogador %d venceu!\n", estado.turno);
+            estado.jogo_ativo = 0;
+        } else if (estado.erros >= MAX_ERROS) {
+            sprintf(sendBuffer,"Derrota:%s", estado.palavra);
+            broadcast(jogador1, jogador2, sendBuffer);
+            printf("[Servador] Ambos perderam! A palavra era: %s\n", estado.palavra);
+            estado.jogo_ativo = 0;
+        }
+ 
+    // Troca de turno
+        if (troca_turno && estado.jogo_ativo) {
+            estado.turno = (estado.turno == 1) ? 2 : 1;
+        }
+
 }
 
 //usar client/server
     getchar();
 //Fechar o socket do cliente
-    closesocket(atual);
+    closesocket(jogador1);
+    closesocket(jogador2);
 //Fechar o socket criado
     closesocket(sock);
 //Finalizar a biblioteca Winsock
