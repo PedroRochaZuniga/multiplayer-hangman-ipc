@@ -37,14 +37,19 @@ int main(void){
     }
     else{printf("Conectando ao servidor\n");}
 
+// Inicalização dos dados de um jogador
+    char palavra_agora[100] = "";
+    char letras_usadas[27] = "";
+    int erros_agora = 0;
+    int meu_numero = 0;
+    int minha_vez = 0;
+    char recvBuffer[512];
+    char sendBuffer[512];
+    int bytesReceived;
+
 // Enviando mensagem
 // Recendo a mensagem
 // Loop com socket do servidor
-
-    char texto[512];
-    char recvBuffer[512];
-    int bytesReceived;
-
     while (1){
          bytesReceived = recv(clientSocket, recvBuffer,sizeof(recvBuffer),0);
 
@@ -56,23 +61,97 @@ int main(void){
     recvBuffer[bytesReceived] = '\0';
 
     // servidor liberou jogada
-    if(strcmp(recvBuffer, "SUA_VEZ") == 0){
-
-        printf("\n=== SUA VEZ ===\n");
-
-        printf("Digite uma letra: ");
-        fgets(texto,sizeof(texto),stdin);
-
-        texto[strcspn(texto,"\n")] = 0;
-
-        send(clientSocket, texto, strlen(texto),0);
+    if(strcmp(recvBuffer, "VOCE_JG1") == 0){
+        meu_numero = 1;
+        printf("Você é o jogador 1!\n");
+        printf(" ");
     }
 
     // servidor mandou esperar
-    else if(strcmp(recvBuffer, "ESPERE") == 0){
-
-        printf("Aguardando outro jogador...\n");
+    else if(strcmp(recvBuffer, "VOCE_JG2") == 0){
+        meu_numero = 2;
+        printf("Você é o jogador 2!\n");
+        printf(" ");
     }
+    else if(strcmp(recvBuffer, "PALAVRA:") == 0){
+        strcpy(palavra_agora, recvBuffer + 8);
+        printf("Palavra atual: %s\n", palavra_agora);
+    }
+    else if(strcmp(recvBuffer, "USADAS:") == 0){
+        strcpy(letras_usadas, recvBuffer + 7);
+        if (strlen(letras_usadas) > 0){
+            printf("Letras usadas: %s\n", letras_usadas);
+
+        }}
+    else if(strcmp(recvBuffer, "SUA_VEZ") == 0){
+        minha_vez = 1;
+        printf("-----------------------------------");
+        printf(" Sua vez, Jogador %d!\n",meu_numero);
+        printf("-----------------------------------\n");
+        printf("[%dL] Para tentar uma letra (ex:%dLa)\n",meu_numero,meu_numero);
+        printf("[%dC] Para chutar uma palavra (ex; [%dCpedrinho])\n",meu_numero,meu_numero);
+        printf("-----------------------------------\n");
+        printf(" ");
+        printf("Digite sua ação: ");
+        fflush(stdout);
+        //Analisa a entrada agora
+        char entrada[512];
+        fgets(entrada,sizeof(entrada),stdin);
+        entrada[strcspn(entrada,"\n")] = '\0'; // Remove o espaço em branco
+        //Monta a ação (identificador + ação + dado)
+        if (tolower((unsigned char)entrada[1]) == 'l' && entrada[2] != '\0') {
+            char letra =tolower((unsigned char)entrada[2]);
+            sprintf(sendBuffer,"%dL:%c", meu_numero,letra);
+        } else if (tolower((unsigned char)entrada[1]) == 'c' && entrada[2] != '\0') {
+            sprintf(sendBuffer,"%dC:%s", meu_numero,entrada + 1);
+        } else {
+            printf("[!] Formato invalido! Use %dL? para letra ou %dC????? para chutar!\n", meu_numero, meu_numero);
+        }
+        printf("[Enviando] %s...\n", sendBuffer);
+        send(clientSocket,sendBuffer,(int)strlen(sendBuffer)+1,0);
+        minha_vez = 0;
+    }
+    else if (strcmp(recvBuffer, "ESPERE") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+        else if (strcmp(recvBuffer, "ACERTO") == 0) {
+        printf("Boa! Letra correta! Você mantém a vez... \n");
+    }
+        else if (strcmp(recvBuffer, "ERRO") == 0) {
+        printf("Putzzz! Letra errada! Vez do outro jogador... \n");
+    }
+        else if (strcmp(recvBuffer, "ACERTO_OPNENTE") == 0) {
+        printf("Sério isso?! O oponente acertou uma letra! Não podemos deixar ele ganhar... \n");
+    }
+        else if (strcmp(recvBuffer, "ERRO_OPONENTE") == 0) {
+        printf("Kkkkkk o oponente errou! Vai lá e mostre oq é capaz...\n");
+    }
+        else if (strcmp(recvBuffer, "LETRA_JA_USADA") == 0) {
+        printf("Acho que já tentaram essa letra! Tente outra, você mantém a vez... \n");
+    }
+        else if (strcmp(recvBuffer, "CHUTE:OK") == 0) {
+        printf("BOAAAA! ACERTOU A PALAVRA! \n");
+    }
+        else if (strcmp(recvBuffer, "CHUTE;ERROU") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+        else if (strcmp(recvBuffer, "ESPERE") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+        else if (strcmp(recvBuffer, "ESPERE") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+        else if (strcmp(recvBuffer, "ESPERE") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+        else if (strcmp(recvBuffer, "ESPERE") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+        else if (strcmp(recvBuffer, "ESPERE") == 0) {
+        printf("Aguardando a jogada do oponente... \n");
+    }
+
+
 
     // palavra atualizada
     else{

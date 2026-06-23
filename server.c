@@ -11,7 +11,6 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 #define MAX_ERROS 6
-#define TAM_BUFFER 512
 
 // RODAR NO TERMINAL
 //    gcc server.c -o server -lws2_32
@@ -39,6 +38,13 @@
 // gethostbynaddr – Obtém informações sobre um host a partir do end de IP
 // gethostname - Obtém o nome do host local
 // getaddrinfo - Obtém informações deum endereço para um nome ou serviço
+
+//Funções gerais
+// broadcast - envia uma mensagem para os dois jogadores
+// enviar_descobertas - envia as informações atuais do jogo para os jogadores
+// palavra_descoberta - verfica se a palavra "escondida" foi descoberta
+// processar_letra - processa uma letra a partir de uma açãode um jogador na palavra original
+// processar_chute - processa um chute de um jogador com a palavra original
 
 
 
@@ -303,7 +309,7 @@ int main(void)
             estado.turno = (estado.turno == 1) ? 2 : 1;
         }
 
-}
+}}
 
 //usar client/server
     getchar();
