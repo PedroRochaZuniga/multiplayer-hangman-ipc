@@ -8,6 +8,7 @@
 #include <Winsock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
+#include <ctype.h>
 
 #pragma comment(lib, "Ws2_32.lib")
 #define MAX_ERROS 6
@@ -88,7 +89,7 @@ void enviar_descobertas(SOCKET jogador1, SOCKET jogador2, Estadojogo *estado){
 
 //Função que verifica se a palavra secreta não possui mais *_*, ou seja, foi descoberta
 int palavra_descoberta(Estadojogo *estado){
-    return strchr(estado->palavra_secreta,"_") == NULL;
+    return strchr(estado->palavra_secreta,'_') == NULL;
 }
 
 
@@ -103,7 +104,7 @@ int processar_letra(Estadojogo *estado, char letra){
     estado->letras_usadas[estado->num_letras_usadas] = '\0';
 
     int acertou = 0;
-    for (int i = 0; i < (int)strlen(estado->palavra);i++){
+    for (int i = 0; i < (int)strlen(estado->palavra) + 1;i++){
         if (estado->palavra[i] == letra){
             estado->palavra_secreta[i] = letra;
             acertou = 1;
@@ -184,7 +185,7 @@ int main(void)
     SOCKET jogador1 = accept(sock, (struct sockaddr*)&clientAddr,&clientAddrLen);
     SOCKET jogador2 = accept(sock, (struct sockaddr*)&clientAddr,&clientAddrLen);
     if (jogador1 == INVALID_SOCKET || jogador2 == INVALID_SOCKET){
-        printf("Erro ao aceitar a conexão: %d\n", WSAGetLastError());
+        printf("Erro ao aceitar a conexao: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
         return 1;
@@ -292,8 +293,8 @@ int main(void)
     enviar_descobertas(jogador1,jogador2,&estado);
 
     //Verifica se o jogo já acabou, vitória ou erros
-    if (palavra_completa(&estado)) {
-            sprintf(sendBuffer, "Vitória do: Jogador %d!", estado.turno);
+    if (palavra_descoberta(&estado)) {
+            sprintf(sendBuffer, "VITORIA:JG%d", estado.turno);
             broadcast(jogador1, jogador2, sendBuffer);
             printf("[Servidor] Jogador %d venceu!\n", estado.turno);
             estado.jogo_ativo = 0;
@@ -309,7 +310,7 @@ int main(void)
             estado.turno = (estado.turno == 1) ? 2 : 1;
         }
 
-}}
+}
 
 //usar client/server
     getchar();
@@ -320,7 +321,7 @@ int main(void)
     closesocket(sock);
 //Finalizar a biblioteca Winsock
     WSACleanup();
-
+}
 
 
 

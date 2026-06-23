@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <winsock.h>
+#include <Winsock2.h>
+#include <WS2tcpip.h>
+#include <Windows.h>
+#include <ctype.h>
 
 //O socket é o meio de comunicação entre o cliente e o servidor, como se fosse um telefone
 
@@ -35,7 +38,8 @@ int main(void){
         WSACleanup();
         return 1;
     }
-    else{printf("Conectando ao servidor\n");}
+    else{printf("Conectando ao servidor\n");
+    printf(" ");}
 
 // Inicalização dos dados de um jogador
     char palavra_agora[100] = "";
@@ -63,16 +67,16 @@ int main(void){
     // servidor liberou jogada
     if(strcmp(recvBuffer, "VOCE_JG1") == 0){
         meu_numero = 1;
-        printf("Você é o jogador 1!\n");
+        printf("Voce eh o jogador 1!\n");
         printf(" ");
     }
 
     else if(strcmp(recvBuffer, "VOCE_JG2") == 0){
         meu_numero = 2;
-        printf("Você é o jogador 2!\n");
+        printf("Voce eh o jogador 2!\n");
         printf(" ");
     }
-    else if(strcmp(recvBuffer, "PALAVRA:") == 0){
+    else if(strcmp(recvBuffer, "Palavra:") == 0){
         strcpy(palavra_agora, recvBuffer + 8);
         printf("Palavra atual: %s\n", palavra_agora);
     }
@@ -84,14 +88,14 @@ int main(void){
         }}
     else if(strcmp(recvBuffer, "SUA_VEZ") == 0){
         minha_vez = 1;
-        printf("-----------------------------------");
+        printf("-----------------------------------\n");
         printf(" Sua vez, Jogador %d!\n",meu_numero);
         printf("-----------------------------------\n");
         printf("[%dL] Para tentar uma letra (ex:%dLa)\n",meu_numero,meu_numero);
         printf("[%dC] Para chutar uma palavra (ex; [%dCpedrinho])\n",meu_numero,meu_numero);
         printf("-----------------------------------\n");
         printf(" ");
-        printf("Digite sua ação: ");
+        printf("Digite sua acao: ");
         fflush(stdout);
         //Analisa a entrada agora
         char entrada[512];
@@ -100,9 +104,9 @@ int main(void){
         //Monta a ação (identificador + ação + dado)
         if (tolower((unsigned char)entrada[1]) == 'l' && entrada[2] != '\0') {
             char letra =tolower((unsigned char)entrada[2]);
-            sprintf(sendBuffer,"%dL:%c", meu_numero,letra);
+            sprintf(sendBuffer,"%dL%c", meu_numero,letra);
         } else if (tolower((unsigned char)entrada[1]) == 'c' && entrada[2] != '\0') {
-            sprintf(sendBuffer,"%dC:%s", meu_numero,entrada + 1);
+            sprintf(sendBuffer,"%dC%s", meu_numero,entrada + 1);
         } else {
             printf("[!] Formato invalido! Use %dL? para letra ou %dC????? para chutar!\n", meu_numero, meu_numero);
         }
@@ -114,19 +118,19 @@ int main(void){
         printf("Aguardando a jogada do oponente... \n");
     }
         else if (strcmp(recvBuffer, "ACERTO") == 0) {
-        printf("Boa! Letra correta! Você mantém a vez... \n");
+        printf("Boa! Letra correta! Você mantem a vez... \n");
     }
-        else if (strcmp(recvBuffer, "ERRO") == 0) {
+        else if (strcmp(recvBuffer, "ERROS") == 0) {
         printf("Putzzz! Letra errada! Vez do outro jogador... \n");
     }
         else if (strcmp(recvBuffer, "ACERTO_OPNENTE") == 0) {
-        printf("Sério isso?! O oponente acertou uma letra! Não podemos deixar ele ganhar... \n");
+        printf("Serio isso?! O oponente acertou uma letra! Não podemos deixar ele ganhar... \n");
     }
         else if (strcmp(recvBuffer, "ERRO_OPONENTE") == 0) {
-        printf("Kkkkkk o oponente errou! Vai lá e mostre oq é capaz...\n");
+        printf("Kkkkkk o oponente errou! Vai la e mostre oq eh capaz...\n");
     }
         else if (strcmp(recvBuffer, "LETRA_JA_USADA") == 0) {
-        printf("Acho que já tentaram essa letra! Tente outra, você mantém a vez... \n");
+        printf("Acho que ja tentaram essa letra! Tente outra, você mantem a vez... \n");
     }
         else if (strcmp(recvBuffer, "CHUTE_CERTO") == 0) {
         printf("BOAAAA! ACERTOU A PALAVRA! \n");
@@ -140,12 +144,12 @@ int main(void){
         else if (strcmp(recvBuffer, "VITORIA:") == 0) {
         char vencedor[10];
         strcpy(vencedor,recvBuffer+8);
-        printf("-----------------------------------");
+        printf("-----------------------------------\n");
         if (((meu_numero == 1 && strcmp(vencedor, "JG1")) == 0) || (meu_numero == 2 && strcmp(vencedor, "JG2") == 0)) {
-            printf("PARABÉNSSSSS! VOCÊ VENCEU!");
+            printf("PARABENSSSSS! VOCÊ VENCEU!\n");
         }
         else {
-            printf("Você infelizmente perdeu :( o oponente completou a palavra...");
+            printf("Você infelizmente perdeu :( o oponente completou a palavra...\n");
         }
         printf("Palavra: %s\n", palavra_agora);
         printf("-----------------------------------\n");
