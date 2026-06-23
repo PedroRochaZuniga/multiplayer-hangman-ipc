@@ -67,7 +67,6 @@ int main(void){
         printf(" ");
     }
 
-    // servidor mandou esperar
     else if(strcmp(recvBuffer, "VOCE_JG2") == 0){
         meu_numero = 2;
         printf("Você é o jogador 2!\n");
@@ -129,62 +128,43 @@ int main(void){
         else if (strcmp(recvBuffer, "LETRA_JA_USADA") == 0) {
         printf("Acho que já tentaram essa letra! Tente outra, você mantém a vez... \n");
     }
-        else if (strcmp(recvBuffer, "CHUTE:OK") == 0) {
+        else if (strcmp(recvBuffer, "CHUTE_CERTO") == 0) {
         printf("BOAAAA! ACERTOU A PALAVRA! \n");
     }
-        else if (strcmp(recvBuffer, "CHUTE;ERROU") == 0) {
-        printf("Aguardando a jogada do oponente... \n");
+        else if (strcmp(recvBuffer, "CHUTE_ERRADO") == 0) {
+        printf("NÃOOOO! VOCÊ ERROU O CHUTE :( perdeu 2 vidas... \n");
     }
-        else if (strcmp(recvBuffer, "ESPERE") == 0) {
-        printf("Aguardando a jogada do oponente... \n");
+        else if (strcmp(recvBuffer, "CHUTE_OPONENTE_ERRADO") == 0) {
+        printf("KKKKKKK oponente tentou chutar e errou, bora ganhar agora... \n");
     }
-        else if (strcmp(recvBuffer, "ESPERE") == 0) {
-        printf("Aguardando a jogada do oponente... \n");
-    }
-        else if (strcmp(recvBuffer, "ESPERE") == 0) {
-        printf("Aguardando a jogada do oponente... \n");
-    }
-        else if (strcmp(recvBuffer, "ESPERE") == 0) {
-        printf("Aguardando a jogada do oponente... \n");
-    }
-        else if (strcmp(recvBuffer, "ESPERE") == 0) {
-        printf("Aguardando a jogada do oponente... \n");
-    }
-
-
-
-    // palavra atualizada
-    else{
-
-        printf("Palavra: %s\n",recvBuffer);
-    }
-    fgets(texto,sizeof(texto),stdin);
-    texto[strcspn(texto,"\n")] = 0; // Encontra o \n da mensagem e troca por \0
-    int bytesSent = send(clientSocket, texto, strlen(texto),0);
-    if (bytesSent == SOCKET_ERROR){
-        printf("Erro ao enviar dados: %d\n",WSAGetLastError());
-        closesocket(clientSocket);
-        WSACleanup();
-        return 1;
-    }if (strcmp(texto,"sair")== 0){
-        printf("Encerrando a conexao com os servidor!\n");
+        else if (strcmp(recvBuffer, "VITORIA:") == 0) {
+        char vencedor[10];
+        strcpy(vencedor,recvBuffer+8);
+        printf("-----------------------------------");
+        if (((meu_numero == 1 && strcmp(vencedor, "JG1")) == 0) || (meu_numero == 2 && strcmp(vencedor, "JG2") == 0)) {
+            printf("PARABÉNSSSSS! VOCÊ VENCEU!");
+        }
+        else {
+            printf("Você infelizmente perdeu :( o oponente completou a palavra...");
+        }
+        printf("Palavra: %s\n", palavra_agora);
+        printf("-----------------------------------\n");
         break;
-    }
-    bytesReceived = recv(clientSocket, recvBuffer,sizeof(recvBuffer),0);
-    if (bytesReceived == SOCKET_ERROR){
-        printf("Erro ao receber dados: %d\n",WSAGetLastError());
-        closesocket(clientSocket);
-        WSACleanup();
-        return 1;
-    }
-    else if (bytesReceived == 0){
-        printf("O servidor fechou o jogo!\n");
+
+    } else if(strcmp(recvBuffer, "DERROTA:")==0){
+        printf("-----------------------------------\n");
+        printf("FIM DE JOGO! VOCÊS DOIS PERDERAM! Mais sorte na próxima...\n");
+        printf("A palavra era: %s\n", recvBuffer + 8);
         break;
+    } else if(strcmp(recvBuffer,"INVALIDO") == 0){
+        printf("Comando inválido! Tente novamente...");
     }
+}
+printf("Pressione ENTER para sair...\n");
 // Finalizando socket/biblioteca
     getchar();
 // Usar client/server
     closesocket(clientSocket);
     WSACleanup();
     return 0;
-}}
+}
