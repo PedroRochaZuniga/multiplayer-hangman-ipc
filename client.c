@@ -8,6 +8,85 @@
 
 //O socket é o meio de comunicação entre o cliente e o servidor, como se fosse um telefone
 
+void desenhar_forca(int erros){
+    printf("\n");
+
+    switch(erros){
+
+        case 0:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+
+        case 1:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf(" O   |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+
+        case 2:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf(" O   |\n");
+            printf(" |   |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+
+        case 3:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf(" O   |\n");
+            printf("/|   |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+
+        case 4:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf(" O   |\n");
+            printf("/|\\  |\n");
+            printf("     |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+
+        case 5:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf(" O   |\n");
+            printf("/|\\  |\n");
+            printf("/    |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+
+        case 6:
+            printf(" +---+\n");
+            printf(" |   |\n");
+            printf(" O   |\n");
+            printf("/|\\  |\n");
+            printf("/ \\  |\n");
+            printf("     |\n");
+            printf("=======\n");
+            break;
+    }
+
+    printf("\n");
+}
+
 //Inicializar a biblioteca
 int main(void){
     WSADATA winsocketsDados;
@@ -64,11 +143,12 @@ int main(void){
 
     recvBuffer[bytesReceived] = '\0';
 
+
     // servidor liberou jogada
     if(strcmp(recvBuffer, "VOCE_JG1") == 0){
         meu_numero = 1;
+        printf("\n");
         printf("Voce eh o jogador 1!\n");
-        printf(" ");
     }
 
     else if(strcmp(recvBuffer, "VOCE_JG2") == 0){
@@ -78,6 +158,8 @@ int main(void){
     }
     else if(strncmp(recvBuffer, "Palavra: ",9) == 0){
         strcpy(palavra_agora, recvBuffer + 9);
+        printf("\n");
+        printf("==========================================\n");
         printf("Palavra atual: %s\n", palavra_agora);
     }
     else if(strncmp(recvBuffer, "Letras ja usadas: ",17) == 0){
@@ -88,26 +170,30 @@ int main(void){
         }}
     else if(strcmp(recvBuffer, "SUA_VEZ") == 0){
         minha_vez = 1;
-        printf("-----------------------------------\n");
+        printf("==========================================\n");
+        printf("\n");
         printf(" Sua vez, Jogador %d!\n",meu_numero);
-        printf("-----------------------------------\n");
+        printf("\n");
+        printf("==========================================\n");
+        printf("\n");
         printf("[%dL] Para tentar uma letra (ex:%dLa)\n",meu_numero,meu_numero);
+                printf("\n");
         printf("[%dC] Para chutar uma palavra (ex; [%dCpedrinho])\n",meu_numero,meu_numero);
-        printf("-----------------------------------\n");
-        printf(" ");
+                printf("\n");
+        printf("==========================================\n");
+        printf("\n");
         printf("Digite sua acao: ");
         fflush(stdout);
         //Analisa a entrada agora
         char entrada[512];
         fgets(entrada,sizeof(entrada),stdin);
         entrada[strcspn(entrada,"\n")] = '\0'; // Remove o espaço em branco
-        printf("\n[DEBUG] Mensagem recebida: [%s]\n", recvBuffer);
         //Monta a ação (identificador + ação + dado)
         if (tolower((unsigned char)entrada[1]) == 'l' && entrada[2] != '\0') {
             char letra =tolower((unsigned char)entrada[2]);
             sprintf(sendBuffer,"%dL%c", meu_numero,letra);
         } else if (tolower((unsigned char)entrada[1]) == 'c' && entrada[2] != '\0') {
-            sprintf(sendBuffer,"%dC%s", meu_numero,entrada + 1);
+            sprintf(sendBuffer,"%dC%s", meu_numero,entrada + 2);
         } else {
             printf("[!] Formato invalido! Use %dL? para letra ou %dC????? para chutar!\n", meu_numero, meu_numero);
         }
@@ -116,7 +202,9 @@ int main(void){
         minha_vez = 0;
     }
     else if (strcmp(recvBuffer, "ESPERE") == 0) {
+                printf(" \n ");
         printf("Aguardando a jogada do oponente... \n");
+                printf(" \n ");
     }
         else if (strcmp(recvBuffer, "ACERTO") == 0) {
         printf("Boa! Letra correta! Voce mantem a vez... \n");
@@ -143,8 +231,10 @@ int main(void){
         printf("KKKKKKK oponente tentou chutar e errou, bora ganhar agora... \n");
     }
         else if (strncmp(recvBuffer, "Erros:", 6) == 0) {
+        sscanf(recvBuffer, "Erros: %d", &erros_agora);
         printf("%s", recvBuffer);
-}
+        desenhar_forca(erros_agora);
+    }
         else if (strncmp(recvBuffer, "VITORIA:", 8) == 0) {
         char vencedor[10];
         strcpy(vencedor,recvBuffer + 8);

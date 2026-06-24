@@ -104,7 +104,7 @@ int processar_letra(Estadojogo *estado, char letra){
     estado->letras_usadas[estado->num_letras_usadas] = '\0';
 
     int acertou = 0;
-    for (int i = 0; i < (int)strlen(estado->palavra) + 1;i++){
+    for (int i = 0; i < (int)strlen(estado->palavra); i++){
         if (estado->palavra[i] == letra){
             estado->palavra_secreta[i] = letra;
             acertou = 1;
@@ -206,9 +206,12 @@ int main(void)
     printf("[Servidor] Palavra sorteada foi: %s (%d letras)\n", estado.palavra, n);
 
     send(jogador1, "VOCE_JG1", 9, 0);
+    Sleep(50);
     send(jogador2,"VOCE_JG2", 9, 0);
+    Sleep(50);
 
     enviar_descobertas(jogador1,jogador2,&estado);
+    Sleep(50);
 
     char recvBuffer[512];
     char sendBuffer[512];
@@ -216,6 +219,10 @@ int main(void)
 
 
     while (estado.jogo_ativo){
+    printf("\n=============================\n");
+
+    printf("=============================\n");
+
     SOCKET atual = (estado.turno == 1)? jogador1 : jogador2;
     SOCKET espera = (estado.turno == 1)? jogador2 : jogador1;
     send(atual, "SUA_VEZ", 8, 0);
@@ -233,7 +240,7 @@ int main(void)
         break;
     }
     recvBuffer[bytesReceived] = '\0';
-    printf("[Servidor] Recebido %d\n", recvBuffer);
+    printf("[Servidor] Recebido: %s\n", recvBuffer);
     
 
 //Faz todo o protocolo de troca e análise das mensagens
@@ -306,8 +313,10 @@ int main(void)
  
     // Troca de turno
         if (troca_turno && estado.jogo_ativo) {
+
             estado.turno = (estado.turno == 1) ? 2 : 1;
         }
+
 
 }
 
