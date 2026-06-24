@@ -83,7 +83,7 @@ void enviar_descobertas(SOCKET jogador1, SOCKET jogador2, Estadojogo *estado){
     broadcast(jogador1,jogador2,buffer);
 
     //Envia as letras já usadas
-    sprintf(buffer,"Letras já usadas: %s\n",estado->letras_usadas);
+    sprintf(buffer,"Letras ja usadas: %s\n",estado->letras_usadas);
     broadcast(jogador1,jogador2,buffer);
 }
 
@@ -122,7 +122,6 @@ int processa_chute(Estadojogo *estado, const char *chute){
     strcpy(chute_lower,chute);
     for (int i = 0; chute_lower[i]; i++){
         chute_lower[i] = tolower((unsigned char)chute_lower[i]);
-        return 1;
     }
     if (strcmp(chute_lower,estado->palavra) == 0){
         return 1;
@@ -206,7 +205,7 @@ int main(void)
 
     printf("[Servidor] Palavra sorteada foi: %s (%d letras)\n", estado.palavra, n);
 
-    send(jogador1, "VOCE_JG1", 8, 0);
+    send(jogador1, "VOCE_JG1", 9, 0);
     send(jogador2,"VOCE_JG2", 9, 0);
 
     enviar_descobertas(jogador1,jogador2,&estado);

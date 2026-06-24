@@ -76,12 +76,12 @@ int main(void){
         printf("Voce eh o jogador 2!\n");
         printf(" ");
     }
-    else if(strcmp(recvBuffer, "Palavra:") == 0){
-        strcpy(palavra_agora, recvBuffer + 8);
+    else if(strncmp(recvBuffer, "Palavra: ",9) == 0){
+        strcpy(palavra_agora, recvBuffer + 9);
         printf("Palavra atual: %s\n", palavra_agora);
     }
-    else if(strcmp(recvBuffer, "USADAS:") == 0){
-        strcpy(letras_usadas, recvBuffer + 7);
+    else if(strncmp(recvBuffer, "Letras ja usadas: ",17) == 0){
+        strcpy(letras_usadas, recvBuffer + 18);
         if (strlen(letras_usadas) > 0){
             printf("Letras usadas: %s\n", letras_usadas);
 
@@ -101,6 +101,7 @@ int main(void){
         char entrada[512];
         fgets(entrada,sizeof(entrada),stdin);
         entrada[strcspn(entrada,"\n")] = '\0'; // Remove o espaço em branco
+        printf("\n[DEBUG] Mensagem recebida: [%s]\n", recvBuffer);
         //Monta a ação (identificador + ação + dado)
         if (tolower((unsigned char)entrada[1]) == 'l' && entrada[2] != '\0') {
             char letra =tolower((unsigned char)entrada[2]);
@@ -118,35 +119,38 @@ int main(void){
         printf("Aguardando a jogada do oponente... \n");
     }
         else if (strcmp(recvBuffer, "ACERTO") == 0) {
-        printf("Boa! Letra correta! Você mantem a vez... \n");
+        printf("Boa! Letra correta! Voce mantem a vez... \n");
     }
-        else if (strcmp(recvBuffer, "ERROS") == 0) {
+        else if (strcmp(recvBuffer, "ERRO") == 0) {
         printf("Putzzz! Letra errada! Vez do outro jogador... \n");
     }
         else if (strcmp(recvBuffer, "ACERTO_OPNENTE") == 0) {
-        printf("Serio isso?! O oponente acertou uma letra! Não podemos deixar ele ganhar... \n");
+        printf("Serio isso?! O oponente acertou uma letra! Nao podemos deixar ele ganhar... \n");
     }
         else if (strcmp(recvBuffer, "ERRO_OPONENTE") == 0) {
         printf("Kkkkkk o oponente errou! Vai la e mostre oq eh capaz...\n");
     }
         else if (strcmp(recvBuffer, "LETRA_JA_USADA") == 0) {
-        printf("Acho que ja tentaram essa letra! Tente outra, você mantem a vez... \n");
+        printf("Acho que ja tentaram essa letra! Tente outra, voce mantem a vez... \n");
     }
         else if (strcmp(recvBuffer, "CHUTE_CERTO") == 0) {
         printf("BOAAAA! ACERTOU A PALAVRA! \n");
     }
         else if (strcmp(recvBuffer, "CHUTE_ERRADO") == 0) {
-        printf("NÃOOOO! VOCÊ ERROU O CHUTE :( perdeu 2 vidas... \n");
+        printf("NAOOOO! VOCE ERROU O CHUTE :( perdeu 2 vidas... \n");
     }
         else if (strcmp(recvBuffer, "CHUTE_OPONENTE_ERRADO") == 0) {
         printf("KKKKKKK oponente tentou chutar e errou, bora ganhar agora... \n");
     }
-        else if (strcmp(recvBuffer, "VITORIA:") == 0) {
+        else if (strncmp(recvBuffer, "Erros:", 6) == 0) {
+        printf("%s", recvBuffer);
+}
+        else if (strncmp(recvBuffer, "VITORIA:", 8) == 0) {
         char vencedor[10];
-        strcpy(vencedor,recvBuffer+8);
+        strcpy(vencedor,recvBuffer + 8);
         printf("-----------------------------------\n");
-        if (((meu_numero == 1 && strcmp(vencedor, "JG1")) == 0) || (meu_numero == 2 && strcmp(vencedor, "JG2") == 0)) {
-            printf("PARABENSSSSS! VOCÊ VENCEU!\n");
+        if ((meu_numero == 1 && strcmp(vencedor, "JG1") == 0) || (meu_numero == 2 && strcmp(vencedor, "JG2") == 0)) {
+            printf("PARABENSSSSS! VOCE VENCEU!\n");
         }
         else {
             printf("Você infelizmente perdeu :( o oponente completou a palavra...\n");
@@ -155,13 +159,13 @@ int main(void){
         printf("-----------------------------------\n");
         break;
 
-    } else if(strcmp(recvBuffer, "DERROTA:")==0){
+    } else if(strncmp(recvBuffer, "Derrota:",8)==0){
         printf("-----------------------------------\n");
-        printf("FIM DE JOGO! VOCÊS DOIS PERDERAM! Mais sorte na próxima...\n");
+        printf("FIM DE JOGO! VOCES DOIS PERDERAM! Mais sorte na próxima...\n");
         printf("A palavra era: %s\n", recvBuffer + 8);
         break;
     } else if(strcmp(recvBuffer,"INVALIDO") == 0){
-        printf("Comando inválido! Tente novamente...");
+        printf("Comando invalido! Tente novamente...");
     }
 }
 printf("Pressione ENTER para sair...\n");
