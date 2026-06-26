@@ -8,16 +8,13 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-// gcc client.c -o client -lws2_32
-// ./client  (abrir em dois terminais separados)
 
-// ─── helpers visuais ─────────────────────────────────────────────────────────
 
 void separador() {
     printf("\n========================================\n");
 }
 
-// Desenha a forca: erros vai de 0 a 6
+//Desenha a forca: erros vai de 0 a 6
 void desenhar_forca(int erros) {
     if (erros > 6) erros = 6;
     printf("  +---+\n");
@@ -32,7 +29,6 @@ void desenhar_forca(int erros) {
     printf("=========\n");
 }
 
-// ─── leitura de linha limpa ──────────────────────────────────────────────────
 
 // Lê uma linha do stdin, remove \n e descarta o restante se passar de max
 void ler_linha(char *buf, int max) {
@@ -41,13 +37,10 @@ void ler_linha(char *buf, int max) {
     if (len > 0 && buf[len - 1] == '\n') {
         buf[len - 1] = '\0';
     } else {
-        // linha maior que o buffer: descarta o restante
         int c;
         while ((c = getchar()) != '\n' && c != EOF);
     }
 }
-
-// ─── main ────────────────────────────────────────────────────────────────────
 
 int main(void) {
     WSADATA wsd;
@@ -76,35 +69,31 @@ int main(void) {
     printf("   BEM-VINDO AO JOGO DA FORCA!\n");
     printf("   Conectado! Aguardando o outro jogador...\n");
 
-    // Estado local do cliente
+    //Estado local do jogador
     char palavra_atual[100] = "";
     char letras_usadas[64]  = "";
     int  erros_atual        = 0;
     int  meu_numero         = 0;
 
-    // Buffer de recepcao com acumulador (evita mensagens coladas)
+    //Buffer de recepcao
     char  acum[4096] = "";
     int   acum_len   = 0;
     char  recvBuffer[1024];
     char  sendBuffer[512];
     int   bytesReceived;
 
-    // ── loop principal ────────────────────────────────────────────────────────
     while (1) {
-        // Recebe dados e acumula
+        //Recebe dados e acumula
         bytesReceived = recv(sock, recvBuffer, sizeof(recvBuffer) - 1, 0);
         if (bytesReceived <= 0) {
             printf("\nConexao encerrada pelo servidor.\n");
             break;
         }
 
-        // Adiciona ao acumulador (mensagens separadas por '\0')
         if (acum_len + bytesReceived < (int)sizeof(acum)) {
             memcpy(acum + acum_len, recvBuffer, bytesReceived);
             acum_len += bytesReceived;
         }
-
-        // Processa todas as mensagens completas (terminadas em '\0') do acumulador
         int pos = 0;
         while (pos < acum_len) {
             // Encontra o próximo '\0'
@@ -115,9 +104,7 @@ int main(void) {
             char *msg = acum + pos;
             pos = end + 1;
 
-            // ── despacha mensagem ─────────────────────────────────────────
-
-            // Identificação do jogador
+            //Identificação do jogador
             if (strcmp(msg, "VOCE_JG1") == 0) {
                 meu_numero = 1;
                 separador();
@@ -129,16 +116,16 @@ int main(void) {
                 printf("   Voce eh o JOGADOR 2!\n");
             }
 
-            // Estado do jogo: palavra
+            //Estado do jogo: palavra
             else if (strncmp(msg, "Palavra: ", 9) == 0) {
                 strncpy(palavra_atual, msg + 9, sizeof(palavra_atual) - 1);
                 palavra_atual[sizeof(palavra_atual) - 1] = '\0';
             }
-            // Estado do jogo: erros
+            //Estado do jogo: erros
             else if (strncmp(msg, "Erros: ", 7) == 0) {
                 sscanf(msg + 7, "%d", &erros_atual);
             }
-            // Estado do jogo: letras (sempre a última das 3 — exibe tudo junto)
+            //Estado do jogo: letras
             else if (strncmp(msg, "Letras ja usadas: ", 18) == 0) {
                 strncpy(letras_usadas, msg + 18, sizeof(letras_usadas) - 1);
                 letras_usadas[sizeof(letras_usadas) - 1] = '\0';
@@ -151,8 +138,6 @@ int main(void) {
                 else
                     printf("  Letras  : (nenhuma ainda)\n");
             }
-
-            // ── sua vez ───────────────────────────────────────────────────
             else if (strcmp(msg, "SUA_VEZ") == 0) {
                 separador();
                 printf("   SUA VEZ, JOGADOR %d!\n", meu_numero);
@@ -166,7 +151,7 @@ int main(void) {
                 char entrada[128];
                 ler_linha(entrada, sizeof(entrada));
 
-                // Valida formato: deve começar com o numero do jogador
+                //Valida formato: deve começar com o numero do jogador
                 char tipo = (strlen(entrada) >= 2) ? toupper((unsigned char)entrada[1]) : 0;
 
                 if ((tipo == 'L' || tipo == 'C') && entrada[2] != '\0') {
@@ -174,7 +159,6 @@ int main(void) {
                         char letra = tolower((unsigned char)entrada[2]);
                         sprintf(sendBuffer, "%dL%c", meu_numero, letra);
                     } else {
-                        // Normaliza o chute para minúsculo
                         char chute[100];
                         strncpy(chute, entrada + 2, sizeof(chute) - 1);
                         chute[sizeof(chute) - 1] = '\0';
@@ -185,19 +169,17 @@ int main(void) {
                 } else {
                     printf("  [!] Formato invalido! Use %dL<letra> ou %dC<palavra>\n",
                            meu_numero, meu_numero);
-                    sprintf(sendBuffer, "%dX", meu_numero); // inválido; servidor responde INVALIDO
+                    sprintf(sendBuffer, "%dX", meu_numero);
                 }
 
                 send(sock, sendBuffer, (int)strlen(sendBuffer) + 1, 0);
             }
 
-            // ── espera ────────────────────────────────────────────────────
             else if (strcmp(msg, "ESPERE") == 0) {
                 separador();
                 printf("   Aguardando jogada do oponente...\n");
             }
 
-            // ── resultados de jogada ──────────────────────────────────────
             else if (strcmp(msg, "ACERTO") == 0) {
                 printf("\n  [+] Letra correta! Voce mantem a vez!\n");
             }
@@ -228,8 +210,6 @@ int main(void) {
             else if (strcmp(msg, "INVALIDO") == 0) {
                 printf("\n  [!] Comando invalido! Tente novamente.\n");
             }
-
-            // ── fim de jogo: vitoria ──────────────────────────────────────
             else if (strncmp(msg, "VITORIA:", 8) == 0) {
                 const char *vencedor = msg + 8;
                 separador();
@@ -243,8 +223,6 @@ int main(void) {
                     printf("   *** PARABENS! VOCE VENCEU! ***\n");
                 else
                     printf("   O oponente completou a palavra. Melhor sorte!\n");
-
-                // Pergunta nova rodada direto aqui, sem esperar JOGAR_NOVAMENTE
                 separador();
                 printf("   Deseja jogar novamente?\n");
                 printf("   [1] Nova partida\n");
@@ -263,16 +241,12 @@ int main(void) {
                     printf("\n   Saindo do jogo...\n");
                 }
             }
-
-            // ── fim de jogo: derrota ──────────────────────────────────────
             else if (strncmp(msg, "Derrota:", 8) == 0) {
                 const char *palavra_real = msg + 8;
                 separador();
                 desenhar_forca(6); // forca completa na derrota
                 printf("\n  FIM DE JOGO! NINGUEM GANHOU ESSA...\n");
                 printf("  A palavra era: %s\n", palavra_real);
-
-                // Pergunta nova rodada direto aqui, sem esperar JOGAR_NOVAMENTE
                 separador();
                 printf("   Deseja jogar novamente?\n");
                 printf("   [1] Nova partida\n");
@@ -291,8 +265,6 @@ int main(void) {
                     printf("\n   Saindo do jogo...\n");
                 }
             }
-
-            // ── nova rodada confirmada ────────────────────────────────────
             else if (strcmp(msg, "NOVA_RODADA") == 0) {
                 memset(palavra_atual, 0, sizeof(palavra_atual));
                 memset(letras_usadas, 0, sizeof(letras_usadas));
@@ -300,8 +272,6 @@ int main(void) {
                 separador();
                 printf("   NOVA RODADA INICIANDO!\n");
             }
-
-            // ── encerramento ──────────────────────────────────────────────
             else if (strcmp(msg, "ENCERRAR") == 0) {
                 separador();
                 printf("   Sessao encerrada. Obrigado por jogar!\n");
@@ -312,21 +282,19 @@ int main(void) {
                 printf("   Um jogador saiu. Encerrando...\n");
                 goto fim;
             }
-
-            // Mensagem desconhecida (debug)
             else {
                 printf("  [debug] msg desconhecida: '%s'\n", msg);
             }
 
-        } // fim while mensagens no acumulador
+        }
 
-        // Move bytes não processados para o início do acumulador
+        //Move bytes não processados para o início do acumulador
         int restante = acum_len - pos;
         if (restante > 0)
             memmove(acum, acum + pos, restante);
         acum_len = restante;
 
-    } // fim loop principal
+    }//fim loop principal
 
 fim:
     printf("\nPressione ENTER para fechar...\n");
